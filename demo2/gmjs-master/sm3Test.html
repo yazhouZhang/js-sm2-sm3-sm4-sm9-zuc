@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+        
+        <script src="js/utils/hex.js"></script>
+        <script src="js/utils/byteUtil.js"></script> 
+		<script src="js/crypto/sm3-1.0.js"></script>
+        
+        
+        <script src="js/utils/jquery-3.3.1.min.js"></script>
+	</head>
+	<body>
+		<div style="text-align:center;">
+		<form action="#" method="post" >
+			
+			<table  style="margin-left: auto;margin-right: auto;"><!--border=0 cellpadding=0 cellspacing=0-->
+	            <tr>
+	                <td style="width:auto;text-align: right;">
+	             		输入数据：
+	                </td>
+	                <td style="text-align: left;"  valign="middle">
+	                    <textarea rows="5" cols="50" name="inputtext" id="inputtext"></textarea>
+	                </td>
+	            </tr>
+	            <tr>
+	                <td style="width:auto;text-align: right;">
+	                                                             结果：
+	                </td>
+	                <td style="text-align: left;"  valign="middle">
+	                    <textarea rows="5" cols="50" name="crypttext" id="crypttext"></textarea>
+	                </td>
+	            </tr>
+	            
+	            <tr>
+	                <td colspan="2" style="width:auto;text-align: center;">
+	                	<input type="button" value="sm3加密" id="btn_enc"/>
+	                    <!--<input type="button" value="随机测试" id="btn_test"/>-->
+	                </td>
+		      	</tr>
+	      </table>
+			
+		</form>
+		</div>
+		
+		<script>
+			
+			/*
+			 * 测试sm3加密
+			 */
+			$("#btn_enc").click(function(){
+				var inputtext = $("#inputtext").val();
+				//这一步是先将输入数据转成utf-8编码的字节流，然后再转成16进制可见字符
+				var dataBy = Hex.utf8StrToBytes(inputtext);
+				
+				var sm3 = new SM3Digest();
+				sm3.update(dataBy,0,dataBy.length);//数据很多的话，可以分多次update
+				var sm3Hash = sm3.doFinal();//得到的数据是个byte数组
+				var sm3HashHex = Hex.encode(sm3Hash,0,sm3Hash.length);//编码成16进制可见字符
+				$("#crypttext").val(sm3HashHex);
+				sm3.testf("from html");
+			});
+			
+			/*
+			$("#btn_test").click(function(){
+				var inputtext = $("#inputtext").val();
+				//这一步是先将输入数据转成utf-8编码的字节流，然后再转成16进制可见字符
+				var dataHex = CryptoJS.enc.Utf8.parse(inputtext).toString();
+				utf8StrToHex(inputtext);
+				
+				var dataBy = Hex.decode(dataHex);//转成byte数据
+				
+				
+				var sm3 = new SM3Digest();
+				sm3.update(dataBy,0,dataBy.length);//数据很多的话，可以分多次update
+				var sm3Hash = sm3.doFinal();//得到的数据是个byte数组
+				var sm3HashHex = Hex.encode(sm3Hash,0,sm3Hash.length);//编码成16进制可见字符
+				$("#crypttext").val(sm3HashHex);
+			});
+			*/
+		</script>
+    </body>
+</html>

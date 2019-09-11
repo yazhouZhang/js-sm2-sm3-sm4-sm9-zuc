@@ -1,0 +1,35 @@
+{
+  "name": "sm-crypto",
+  "version": "0.0.9",
+  "description": "sm-crypto",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest test/*.test.js",
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JuneAndGreen/sm-crypto.git"
+  },
+  "keywords": [
+    "sm",
+    "js",
+    "crypto"
+  ],
+  "jest": {
+    "testEnvironment": "jsdom",
+    "testURL": "https://jest.test"
+  },
+  "author": "june_01",
+  "license": "MIT",
+  "dependencies": {
+    "jsbn": "^1.1.0"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-preset-es2015": "^6.24.1",
+    "jest": "^22.1.4",
+    "webpack": "^3.10.0"
+  }
+}

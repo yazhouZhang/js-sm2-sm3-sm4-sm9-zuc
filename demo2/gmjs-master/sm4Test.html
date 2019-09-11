@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+        
+        <!--sm4所需js-->
+        <script src="js/utils/hex.js"></script>
+        <script src="js/utils/byteUtil.js"></script> 
+		<script src="js/crypto/sm4-1.0.js"></script>
+		
+		<!--生成密钥js-->
+		<script src="js/ext/jsbn.js"></script>
+		<script src="js/ext/jsbn2.js"></script>
+		<script src="js/ext/prng4.js"></script>
+		<script src="js/ext/rng.js"></script>
+        
+        <script src="js/utils/jquery-3.3.1.min.js"></script>
+        
+	</head>
+	<body>
+		<div style="text-align:center;">
+		<form action="#" method="post" >
+			
+			<table  style="margin-left: auto;margin-right: auto;"><!--border=0 cellpadding=0 cellspacing=0-->
+	            <tr>
+	                <td style="width:auto;text-align: right;">
+	             		输入密钥<br>(16进制)：
+	                </td>
+	                <td style="text-align: left;"  valign="middle">
+	                    <textarea rows="5" cols="50" name="keytext" id="keytext"></textarea>
+	                </td>
+	            </tr>
+	            <tr>
+	                <td style="width:auto;text-align: right;">
+	             		输入数据：
+	                </td>
+	                <td style="text-align: left;"  valign="middle">
+	                    <textarea rows="5" cols="50" name="inputtext" id="inputtext"></textarea>
+	                </td>
+	            </tr>
+	            <tr>
+	                <td style="width:auto;text-align: right;">
+	             		cbc模式IV<br>(16进制)：
+	                </td>
+	                <td style="text-align: left;"  valign="middle">
+	                    <textarea rows="5" cols="50" name="ivtext" id="ivtext"></textarea>
+	                </td>
+	            </tr>
+	            <tr>
+	                <td style="width:auto;text-align: right;">
+	                                                             结果：
+	                </td>
+	                <td style="text-align: left;"  valign="middle">
+	                    <textarea rows="5" cols="50" name="resulttext" id="resulttext"></textarea>
+	                </td>
+	            </tr>
+	            
+	            <tr>
+	                <td colspan="2" style="width:auto;text-align: center;">
+	                	<input type="button" value="生成密钥" id="btn_genkey" />
+	                    <input type="button" value="开始ECB测试" id="btn_randecbtest"/>
+	                    <input type="button" value="开始CBC测试" id="btn_randcbctest"/>
+	                </td>
+		      	</tr>
+		      	<tr>
+	                <td colspan="2" style="width:auto;text-align: center;">
+	                	<input type="button" value="ECB加密" id="btn_enc_ecb"/>
+	                    <input type="button" value="ECB解密" id="btn_dec_ecb"/>
+	                    <input type="button" value="CBC加密" id="btn_enc_cbc"/>
+	                    <input type="button" value="CBC解密" id="btn_dec_cbc"/>
+	                </td>
+		      	</tr>
+	      </table>
+			
+		</form>
+		</div>
+		<script>
+			
+			/*
+			 * 测试ecb sm4加密
+			 */
+			$("#btn_enc_ecb").click(function(){
+				
+				var inputtext = $("#inputtext").val();
+				var inputBytes = Hex.utf8StrToBytes(inputtext);
+							
+				var keytext = $("#keytext").val();
+				var key = Hex.decode(keytext);
+				
+				var sm4 = new SM4();
+				var cipher = sm4.encrypt_ecb(key,inputBytes);
+				
+				$("#resulttext").val(Hex.encode(cipher,0,cipher.length))
+			});
+			
+			/*
+			 * 测试ecb sm4解密
+			 */
+			$("#btn_dec_ecb").click(function(){
+				
+				var inputtext = $("#inputtext").val();
+				var inputBytes = Hex.decode(inputtext);
+							
+				var keytext = $("#keytext").val();
+				var key = Hex.decode(keytext);
+				
+				var sm4 = new SM4();
+				var plain = sm4.decrypt_ecb(key,inputBytes);				
+				$("#resulttext").val(Hex.bytesToUtf8Str(plain))
+			});
+			
+			/*
+			 * 测试cbc sm4加密
+			 */
+			$("#btn_enc_cbc").click(function(){
+				
+				var inputtext = $("#inputtext").val();
+				var inputBytes = Hex.utf8StrToBytes(inputtext);
+							
+				var keytext = $("#keytext").val();
+				var key = Hex.decode(keytext);
+				
+				var ivtext = $("#ivtext").val();
+				var iv = Hex.decode(ivtext);
+				
+				var sm4 = new SM4();
+				var cipher = sm4.encrypt_cbc(key,iv,inputBytes);
+				
+				$("#resulttext").val(Hex.encode(cipher,0,cipher.length))
+			});
+			
+			/*
+			 * 测试cbc sm4解密
+			 */
+			$("#btn_dec_cbc").click(function(){
+				
+				var inputtext = $("#inputtext").val();
+				var inputBytes = Hex.decode(inputtext);
+							
+				var keytext = $("#keytext").val();
+				var key = Hex.decode(keytext);
+				
+				var ivtext = $("#ivtext").val();
+				var iv = Hex.decode(ivtext);
+				
+				var sm4 = new SM4();
+				var plain = sm4.decrypt_cbc(key,iv,inputBytes);				
+				$("#resulttext").val(Hex.bytesToUtf8Str(plain))
+			});
+			
+			/**
+			 * 随机生成数据测试
+			 */
+			function generate(len){
+                var realLen = 0;
+                if(len != undefined && len > 0){
+                	realLen = len;
+                }else{
+                	realLen = parseInt(Math.random()*1024)+1;
+                }
+				var data = new Array(realLen);
+				
+				for(var i = 0;i<realLen;i++){
+					data[i] = parseInt(Math.random()*256);
+				}
+				return data;
+			}
+			
+			/**
+			 * 生成密钥
+			 */
+			function generateKey(){
+				var rng = new SecureRandom();
+				var keyBit = new BigInteger(128, rng);
+				while(keyBit.bitLength() < 128){
+					keyBit = new BigInteger(128, rng);
+				}
+				var key   = ("0000000000" + keyBit.toString(16)).slice(- 128/4);
+				return key.toUpperCase();
+			}
+			$("#btn_genkey").click(function(){
+				
+				var key = generateKey();
+				$("#keytext").val(key);
+				
+			});
+			
+			function arrayCompare(src1,pos1,src2,pos2,len) {
+			
+				if(src1.length - pos1 < len) {
+					return -1;
+				}
+				if(src2.length - pos2 < len) {
+					return -1;
+				}
+				for(var i = 0;i<len;i++) {
+					if(src1[pos1++] != src2[pos2++]) {
+						return -1;
+					}
+				}
+				
+				return 0;
+			}
+			
+			
+			
+			/*以下为随机测试*/
+			var count = 0;
+			var failedTime = 0;
+			/*
+			 * 随机测试
+			 */
+			function testSm4Ecb(){
+				
+				var dataBy = generate(0);
+				
+				var sm4 = new SM4();
+				var key = generateKey();
+				
+				var keyBy = Hex.decode(key);
+				
+				var sm4 = new SM4();
+				var cipher = sm4.encrypt_ecb(keyBy,dataBy);				
+                
+                if(cipher == null || cipher.length <= 0){
+                    console.log("encrypt_ecb false:");
+                    console.log("sm4DataHex="+Hex.encode(dataBy,0,dataBy.length));
+                    console.log("sm4CipherHex="+Hex.encode(cipher,0,cipher.length));
+                    console.log("key="+key);
+                    failedTime ++;
+                }
+                
+                var plain = sm4.decrypt_ecb(keyBy,cipher);//解密
+                if(plain == null || plain.length <= 0 || arrayCompare(dataBy,0,plain,0,dataBy.length) != 0){
+                    console.log("decrypt_ecb false:");
+                    console.log("dataHex="+Hex.encode(dataBy,0,dataBy.length));
+                    console.log("cipher="+Hex.encode(cipher,0,cipher.length));
+                    console.log("plainhex"+Hex.encode(plain,0,plain.length));
+                    console.log("key="+key);
+                    failedTime ++;
+                }
+				
+				count ++;
+				if(count % 100 == 0){
+					$("#resulttext").val("随机测试已循环"+count+"次\n其中成功"+(count-failedTime)+"次\n失败"+failedTime+"次\n若有失败，请查看控制台信息");
+				}
+				
+			}
+			function testSm4Cbc(){
+				
+				var dataBy = generate(0);
+				var iv = generate(16);
+				
+				var sm4 = new SM4();
+				var key = generateKey();
+				
+				var keyBy = Hex.decode(key);
+				
+				var sm4 = new SM4();
+				var cipher = sm4.encrypt_cbc(keyBy,iv,dataBy);				
+                
+                if(cipher == null || cipher.length <= 0){
+                    console.log("encrypt_cbc false:");
+                    console.log("sm4DataHex="+Hex.encode(dataBy,0,dataBy.length));
+                    console.log("sm4CipherHex="+Hex.encode(cipher,0,cipher.length));
+                    console.log("key="+key);
+                    failedTime ++;
+                }
+                
+                var plain = sm4.decrypt_cbc(keyBy,iv,cipher);//解密
+                if(plain == null || plain.length <= 0 || arrayCompare(dataBy,0,plain,0,dataBy.length) != 0){
+                    console.log("decrypt_cbc false:");
+                    console.log("dataHex="+Hex.encode(dataBy,0,dataBy.length));
+                    console.log("cipher="+Hex.encode(cipher,0,cipher.length));
+                    console.log("plainhex"+Hex.encode(plain,0,plain.length));
+                    console.log("key="+key);
+                    failedTime ++;
+                }
+				
+				count ++;
+				if(count % 100 == 0){
+					$("#resulttext").val("随机测试已循环"+count+"次\n其中成功"+(count-failedTime)+"次\n失败"+failedTime+"次\n若有失败，请查看控制台信息");
+				}
+				
+			}
+			
+			var isKeepLoopEcb = 1;
+			var isKeepLoopCbc = 1;
+			function loopTest(){
+				if(isKeepLoopEcb > 0){
+					testSm4Ecb();
+					setTimeout("loopTest()", 1);
+				}else if(isKeepLoopCbc > 0){
+					testSm4Cbc();
+		        	setTimeout("loopTest()", 1);
+				}else{
+					return;
+				}
+		    }
+			
+
+			$("#btn_randecbtest").click(function(){
+				
+				var dowhat = $("#btn_randecbtest").val();
+				
+				
+				if(dowhat == "开始ECB测试"){
+					isKeepLoopCbc = 0;
+					$("#btn_randecbtest").val("停止ECB测试");
+					$("#btn_randcbctest").val("开始CBC测试");
+					isKeepLoopEcb = 1;
+					loopTest();
+					
+				}else{
+					isKeepLoopEcb = 0;
+					$("#btn_randecbtest").val("开始ECB测试");
+				}
+				
+			});
+			$("#btn_randcbctest").click(function(){
+				
+				var dowhat = $("#btn_randcbctest").val();
+				
+				if(dowhat == "开始CBC测试"){
+					isKeepLoopEcb = 0;
+					$("#btn_randcbctest").val("停止CBC测试");
+					$("#btn_randecbtest").val("开始ECB测试");
+					isKeepLoopCbc = 1;
+					loopTest();
+					
+				}else{
+					isKeepLoopCbc = 0;
+					$("#btn_randcbctest").val("开始CBC测试");
+				}
+				
+			});
+			
+		</script>
+    </body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+        
+        
+		<!--
+			sm3最少依赖包
+        -->
+        <script src="js/utils/hex.js"></script>
+		<script src="js/utils/byteUtil.js"></script> 
+		<script src="js/crypto/sm3-1.0.js"></script>
+		
+
+		<!--
+			这部分包+sm3最少依赖包=sm2需要包
+		-->
+		<script src="js/ext/jsbn.js"></script>
+		<script src="js/ext/jsbn2.js"></script>
+		<script src="js/ext/ec.js"></script>
+		<script src="js/ext/ec-patch.js"></script>
+		<script src="js/ext/prng4.js"></script>
+		<script src="js/ext/rng.js"></script>
+		<script src="js/crypto/sm2-1.0.js"></script>
+        
+        <!--
+        	不必要的js
+        -->
+        <script src="js/utils/jquery-3.3.1.min.js"></script>
+        
+        <style> 
+		body{ text-align:center} 
+		.div{ margin:0 auto; border:1px solid #F00} 
+		
+		</style> 
+	</head>
+	<body>
+		<div style="text-align:center;">
+		<div >
+		<form action="#" method="post" >
+			
+			<table  style="margin-left: auto;margin-right: auto;"><!--border=0 cellpadding=0 cellspacing=0-->
+	            <tr>
+	                <td style="width:auto;text-align: right;">
+	                    sm2公钥：
+	                </td>
+	                <td style="text-align: left;"  valign="middle">
+	                    <textarea rows="2" cols="50" name="pubkey" id="pubkey"></textarea>
+	                </td>
+	            </tr>
+	            <tr>
+	                <td style="width:auto;text-align: right;">
+	                    sm2私钥：
+	                </td>
+	                <td style="text-align: left;"  valign="middle">
+	                    <textarea rows="2" cols="50" name="privkey" id="privkey"></textarea>
+	                </td>
+	            </tr>
+	            <tr>
+	                <td style="width:auto;text-align: right;">
+	             		输入数据：
+	                </td>
+	                <td style="text-align: left;"  valign="middle">
+	                    <textarea rows="5" cols="50" name="inputtext" id="inputtext"></textarea>
+	                </td>
+	            </tr>
+	            <tr>
+	                <td style="width:auto;text-align: right;">
+	                                                             结果：
+	                </td>
+	                <td style="text-align: left;"  valign="middle">
+	                    <textarea rows="5" cols="50" name="crypttext" id="crypttext"></textarea>
+	                </td>
+	            </tr>
+	            <!--<tr>
+	                <td style="width:auto;text-align: right;">
+	                                                             加密结果：
+	                </td>
+	                <td style="text-align: left;"  valign="middle">
+	                    <textarea rows="5" cols="50" name="encrypttext" id="encrypttext"></textarea>
+	                </td>
+	            </tr>
+	            <tr>
+	                <td style="width:auto;text-align: right;">
+	                                                             解密结果：
+	                </td>
+	                <td style="text-align: left;"  valign="middle">
+	                    <textarea rows="5" cols="50" name="decrypttext" id="decrypttext"></textarea>
+	                </td>
+	            </tr>-->
+	            <tr>
+	                <td colspan="2" style="width:auto;text-align: center;">
+						<input type="button" value="生成公私钥" id="btn_genkey"/>
+	                	<input type="button" value="加密" id="btn_enc"/>
+	                	<input type="button" value="解密" id="btn_dec"/>
+	                    <input type="button" value="开始随机测试" id="btn_test"/>
+	                </td>
+		      	</tr>
+	      </table>
+			
+		</form>
+		</div>
+		</div>
+		<script>
+			
+			/**
+			 * 随机生成数据测试
+			 */
+			function generate(len){
+                var realLen = 0;
+                if(len != undefined && len > 0){
+                	realLen = len;
+                }else{
+                	realLen = parseInt(Math.random()*1024)+1;
+                }
+				var data = new Array(realLen);
+				
+				for(var i = 0;i<realLen;i++){
+					data[i] = parseInt(Math.random()*256);
+				}
+				return data;
+			}
+
+			/**
+			 * 生成密钥
+			 */
+			$("#btn_genkey").click(function(){
+				var sm2 = new SM2();
+				var keyPair = sm2.generateKeyPairHex();//得到的keypair结构：{'privkeyhex': hPrv, 'pubkeyhex': hPub}
+				$("#pubkey").val(keyPair['pubkeyhex'].toUpperCase());
+				$("#privkey").val(keyPair['privkeyhex'].toUpperCase());
+			});
+			
+			/*
+			 * 测试加密
+			 */
+			$("#btn_enc").click(function(){
+				var pubkey = $("#pubkey").val();
+				if(pubkey == "" || pubkey.length < 64){
+					alert("公钥为空或错误");
+				}
+				var inputtext = $("#inputtext").val();
+				if(inputtext.length <= 0){
+					alert("输入数据不能为空");
+				}
+				var sm2DataHex = Hex.utf8StrToHex(inputtext);//转成byte数组
+                console.log(sm2DataHex);
+                
+                //sm2加密
+                var sm2 = new SM2();
+                var cipher = sm2.encrypt(pubkey,sm2DataHex);//函数输入输出都是16进制数据
+				
+				$("#crypttext").val(cipher);
+			});
+			
+			/*
+			 * 测试解密
+			 */
+			$("#btn_dec").click(function(){
+				var privkey = $("#privkey").val();
+				if(privkey == "" || privkey.length < 32){
+					alert("私钥为空或错误");
+				}
+				var inputtext = $("#inputtext").val();
+				if(inputtext.length <= 0){
+					alert("输入数据不能为空");
+				}
+                
+                //sm2加密
+                var sm2 = new SM2();
+                var plain = sm2.decrypt(privkey,inputtext);
+                
+				var utf8Str = Hex.hexToUtf8Str(plain);
+				$("#crypttext").val(utf8Str);
+			});
+
+			var count = 0;
+			var failedTime = 0;
+			/*
+			 * 随机测试
+			 */
+			function testSm2(){
+				
+				var dataBy = generate(count);
+				
+				var sm2 = new SM2();
+				var keyPair = sm2.generateKeyPairHex();//得到的keypair结构：{'privkeyhex': hPrv, 'pubkeyhex': hPub}
+                
+                var pubkey = keyPair['pubkeyhex'];
+                var privkey = keyPair['privkeyhex'];
+                
+                var dataHex = Hex.encode(dataBy,0,dataBy.length);//转成16进制
+                
+                var cipherHex = sm2.encrypt(pubkey,dataHex);
+                if(cipherHex == null || cipherHex.length <= 0){
+                    console.log("false:");
+                    console.log("sm2DataHex="+dataHex);
+                    console.log("pubkey="+pubkey);
+                    console.log("privkey="+privkey);
+                    failedTime ++;
+                }
+                
+                var plainHex = sm2.decrypt(privkey,cipherHex);//解密
+                if(plainHex == null || plainHex.length <= 0 || dataHex != plainHex){
+                    console.log("false:");
+                    console.log("dataHex="+dataHex);
+                    console.log("cipher="+cipherHex);
+                    console.log("plainhex"+plainHex);
+                    console.log("pubkey="+pubkey);
+                    console.log("privkey="+privkey);
+                    failedTime ++;
+                }
+				
+				count ++;
+				if(count % 100 == 0){
+					$("#crypttext").val("随机测试已循环"+count+"次\n其中成功"+(count-failedTime)+"次\n失败"+failedTime+"次\n若有失败，请查看控制台信息");
+				}
+				
+			}
+			
+			
+			var isKeepLoop = 1;
+			function loopTest(){
+				if(isKeepLoop > 0){
+					testSm2();
+		        	setTimeout("loopTest()", 1);
+				}else{
+					
+				}
+		    }
+			
+			$("#btn_test").click(function(){
+				var dowhat = $("#btn_test").val();
+				
+				if(dowhat == "开始随机测试"){
+					isKeepLoop = 1;
+					loopTest();
+					$("#btn_test").val("停止随机测试");
+				}else{
+					isKeepLoop = 0;
+					$("#btn_test").val("开始随机测试");
+				}
+				
+			});
+			
+		</script>
+	</body>
+</html>

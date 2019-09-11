@@ -1,0 +1,21 @@
+{
+  "name": "softcrypt",
+  "productName": "softcrypt",
+  "version": "2.1.0",
+  "author": "cwyang",
+  "description": "软加密模块",
+  "license": "BSD-2-Clause",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/YScxw/softcrypt.git"
+  },
+  "homepage": "https://github.com/YScxw/softcrypt",
+  "bugs": {
+    "url": "https://github.com/YScxw/softcrypt/issues"
+  },
+  "main": "./softcrypt.js",
+  "scripts": {
+    "install": "node build.js",
+    "test": "node test.js"
+  }
+}
